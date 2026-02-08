@@ -1,0 +1,26 @@
+{% extends 'layout.html' %}
+{% block content %}
+<section class="form-section">
+    <div class="form-container">
+        <h2>Sign up</h2>
+        {% if error %}
+        <div class="error-message">{{ error }}</div>
+        {% endif %}
+        <form class="signup" action="/sign_up" method="POST">
+            <label for="fullname">Full name:</label>
+            <input type="text" id="fullname" name="fullname" placeholder="Enter your fullname" required>
+
+            <label for="username">User name:</label>
+            <input type="text" id="username" name="username" placeholder="Enter your username" required>
+
+            <label for="email">Email:</label>
+            <input type="text" id="email" name="email" placeholder="Enter your email">
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+
+            <button type="submit" class="btn-signin">SIGN UP</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

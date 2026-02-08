@@ -1,0 +1,196 @@
+{% extends 'main.html' %}
+
+{%block content%}
+<section id="account">
+    <h2 id="account-name">Account: {{ selected_account_name }}</h2>
+    <div class="account-selector">
+    <form method="POST" action="/auth/account">
+    <input type="hidden" name="action" value="change_account">
+    <label for="account-dropdown">Choose Account:</label>
+    <select id="account-dropdown" name="selected_account" onchange="this.form.submit()">
+      {% for account in accounts %}
+      <option value="{{ account[2] }}" {% if account[2] == selected_account_id %}selected{% endif %}>
+          {{ account[0] }}
+      </option>
+      {% endfor %}
+    </select>
+    </form>
+    </div>
+
+    <div class="account-summary">
+        <p class="balance">Balance: {{ balance }} Kč</p>
+        <p class="outcome" id="outcome">Outcome: {{ outcome }} Kč</p>
+        <p class="income" id="income">Income: {{ income }} Kč</p>
+    </div>
+    <div class="actions">
+      <button id="new-transaction-btn">New Transaction</button>
+      <button id="add-new-account-btn">Add New Account</button>
+      <button id="settings-btn">Settings</button>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div id="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+    <div class="hidden-form hidden" id="transaction-form">
+  <h2>New Transaction</h2>
+  <form action="/auth/account" method="POST">
+    <div class="radio-group">
+      <p>Type:</p>
+      <label>
+        <input type="radio" name="type" value="income" onclick="updateAccountLabel()" required> Income
+      </label>
+      <label>
+        <input type="radio" name="type" value="outcome" onclick="updateAccountLabel()" required> Outcome
+      </label>
+    </div>
+    <label>Amount: <input type="text" name="amount" placeholder="Enter amount" required></label>
+    <label>Date: <input type="date" name="date" required></label>
+    <label>Category:</label>
+    <label for="category"></label>
+    <select name="category_id" id="category" required onchange="updateAccountLabel()">
+  <option value="" disabled selected>Select a category</option>
+  <option class="income-category" value="1" style="display:none;">Allowance</option>
+  <option class="income-category" value="2" style="display:none;">Gifts</option>
+  <option class="income-category" value="3" style="display:none;">Salary</option>
+  <option class="outcome-category" value="4" style="display:none;">Food</option>
+  <option class="outcome-category" value="5" style="display:none;">Entertainment</option>
+  <option class="outcome-category" value="6" style="display:none;">Transport</option>
+  <option class="outcome-category" value="7" style="display:none;">Education</option>
+  <option class="outcome-category" value="8" style="display:none;">Clothing</option>
+  <option class="outcome-category" value="9">Transaction for Another Account</option>
+</select>
+    <label id="account-label"></label>
+    {% if "Child" in role %}
+      <div class="checkbox">
+        <label>Private:
+          <input type="checkbox" id="private-checkbox" name="private">
+        </label>
+      </div>
+    {% endif %}
+    <input type="hidden" name="selected_account_id" value="{{ selected_account_id }}">
+    <button type="submit" class="btn" name="action" value="add_transaction">Add</button>
+  </form>
+</div>
+
+    <div class="hidden-form hidden" id="addAccount-form">
+      <h2>Add New Account</h2>
+      <form action="/auth/account" method="POST">
+        <label>Account Name: <input type="text" name="account_name" placeholder="Enter name"></label>
+       <!-- <label>Currency: <input type="text" name="currency" placeholder="Enter currency (USD)"></label> -->
+         <input type="hidden" name="selected_account" value="{{ selected_account_id }}">
+        <button type="submit" class="btn" name="action" value="add_account">Add</button>
+      </form>
+    </div>
+
+    <div class="hidden-form hidden" id="settings-form">
+      <h2>Account Settings</h2>
+      <form action="/auth/account" method="POST">
+        <label>Account Name: <input type="text" name="change_account_name" placeholder="Enter new name"></label>
+          <input type="hidden" name="selected_account" value="{{ selected_account_id }}">
+        <button type="submit" class="btn" name="action" value="change_name">Edit</button>
+        <button type="submit" class="delete_account" name="action" value="delete_account">Delete Account</button>
+      </form>
+    </div>
+   <div class="transaction-history">
+  <h2>Transaction History</h2>
+  <table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Category</th>
+      <th>Amount</th>
+      <th>Date</th>
+      <th>Owner</th>
+      {% if "Child" in role %}
+        <th>Privatness</th>
+      {% endif %}
+      <th>Actions</th>
+    </tr>
+</thead>
+<tbody>
+    {% for transaction in transactions %}
+      <tr>
+        <td>{{ transaction['type'] }}</td>
+        <td>{{ transaction['category_name'] }}</td>
+        <td>{{ transaction['amount'] }} Kč</td>
+        <td>{{ transaction['date'] }}</td>
+        <td>{{ transaction['owner_name'] }}</td>
+        {% if "Child" in role %}
+          {% if transaction.isPrivate == 1 %}
+            <td>Private</td>
+          {% else %}
+            <td>Public</td>
+          {% endif %}
+        {% endif %}
+        <td>
+          <form method="POST">
+            <input type="hidden" name="selected_account" value="{{ selected_account_id }}">
+            <input type="hidden" name="transaction_id" value="{{ transaction['transaction_id'] }}">
+            <button class="delete-transaction"  data-transactionid="{{transaction['transaction_id'] }}" name="action" value="delete_transaction">Delete</button>
+            <button class="edit" data-transactionid="{{transaction['transaction_id']}}">Edit</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+</tbody>
+</table>
+</div>
+
+{% for transaction in transactions %}
+<div class="hidden-form hidden" id="edit-form-{{transaction['transaction_id']}}">
+  <form action="/auth/account" method="POST">
+    <h2>Edit transaction {{transaction.transaction_id}}</h2>
+
+    <div class="radio-group">
+      <p>Type:</p>
+      <label>
+        <input type="radio" name="type" value="income" {% if transaction['type'] == 'income' %}checked{% endif %} onclick="updateAccountLabel()" required> Income
+      </label>
+      <label>
+        <input type="radio" name="type" value="outcome" {% if transaction['type'] == 'outcome' %}checked{% endif %} onclick="updateAccountLabel()" required> Outcome
+      </label>
+    </div>
+
+    <input type="hidden" name="transaction_id" value="{{ transaction['transaction_id'] }}">
+
+    <label>Amount: <input type="text" name="amount" placeholder="Enter new amount" value="{{ transaction['amount'] }}"></label>
+    <label>Date: <input type="date" name="date" value="{{ transaction['date'] }}" required></label>
+
+    <label>Category:</label>
+    <select name="category_id" id="category" required onchange="updateAccountLabel()">
+      <option value="" disabled selected>Select a category</option>
+      <option class="income-category" value="1" {% if transaction['category'] == 1 %}selected{% endif %}>Allowance</option>
+      <option class="income-category" value="2" {% if transaction['category'] == 2 %}selected{% endif %}>Gifts</option>
+      <option class="income-category" value="3" {% if transaction['category'] == 3 %}selected{% endif %}>Salary</option>
+
+      <option class="outcome-category" value="4" {% if transaction['category'] == 4 %}selected{% endif %}>Food</option>
+      <option class="outcome-category" value="5" {% if transaction['category'] == 5 %}selected{% endif %}>Entertainment</option>
+      <option class="outcome-category" value="6" {% if transaction['category'] == 6 %}selected{% endif %}>Transport</option>
+      <option class="outcome-category" value="7" {% if transaction['category'] == 7 %}selected{% endif %}>Education</option>
+      <option class="outcome-category" value="8" {% if transaction['category'] == 8 %}selected{% endif %}>Clothing</option>
+    </select>
+
+    <div id="account-label"></div>
+
+    {% if "Child" in role %}
+    <div class="checkbox">
+      <label>Private:
+        <input type="checkbox" id="private-checkbox" name="private" {% if transaction['isPrivate'] == 1 %}checked{% endif %}>
+      </label>
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn" name="action" value="edit_transaction">Ok</button>
+  </form>
+</div>
+{% endfor %}
+  </section>
+
+{% endblock %}

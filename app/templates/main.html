@@ -1,0 +1,19 @@
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+</head>
+<body>
+    <nav id="navigation">
+      <a href="{{ url_for('auth.account') }}">Account</a>
+      <a href="{{ url_for('auth.statistic') }}">Statistic</a>
+      <a href="{{ url_for('auth.family') }}">Family</a>
+      <a href="{{ url_for('auth.log_out') }}">Log Out</a>
+    </nav>
+    <main>
+    {%block content%}
+    {%endblock%}
+    </main>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{% extends 'main.html' %}
+
+
+{%block content%}
+
+<section id="statistics">
+    <h1>Statistics</h1>
+
+  <form method="POST" action="/auth/statistic">
+      <div class="statistics-filter">
+       <label for="family-member-dropdown">Choose Family Member:</label>
+       <select id="family-member-dropdown" name="user_id" onchange="this.form.submit()">
+         <option value="all" {% if selected_user_id == 'all' %}selected{% endif %}>All Members</option>
+         {% for user in users %}
+           <option value="{{ user.uid }}" {% if user.uid == selected_user_id %}selected{% endif %}>{{ user.fullname }}</option>
+         {% endfor %}
+       </select>
+     </div>
+ </form>
+
+  <div class="annual-statistics">
+    <h2>Annual Family Statistics</h2>
+  </div>
+      <div class="image">
+        <img class="graf-image" src="{{ url_for('static', filename='img/outcome_income_chart.png') }}" alt="Outcome vs Income Chart">
+    </div>
+
+    <div class="annual-statistics">
+       <h2>Category Breakdown</h2>
+    </div>
+    <div>
+        <img class="graf-image" src="{{ url_for('static', filename='img/category_distribution_chart.png') }}" alt="Category Chart">
+    </div>
+</section>
+
+
+{% endblock %}

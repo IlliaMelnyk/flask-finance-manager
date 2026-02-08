@@ -1,0 +1,144 @@
+{% extends 'main.html' %}
+
+{%block content%}
+<section id="family">
+    <h1>Family Management</h1>
+    <div class="hidden-form" id="add-family-member">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div id="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+      {% endif %}
+      {% endwith %}
+    {% if "Admin" in role %}
+      <h2>Add Family Member</h2>
+      <form method="POST" id="add-member-form" class="form-container">
+        <label for="user-name">User name: </label>
+        <input type="text" name="username" id="user-name" placeholder="Enter user name" required>
+        <label for="fullname">Full name:</label>
+        <input type="text" name="fullname" id="fullname" placeholder="Enter Full name" required>
+        <label for="password">Password: </label>
+        <input type="password" name="password" id="password" placeholder="Enter password" required>
+        <button type="submit" class="btn" name="action" value="add_member">Add Member</button>
+      </form>
+    </div>
+    {% endif %}
+    <div class="family-list">
+      <h2>Family List</h2>
+      <table>
+        <thead>
+        <tr>
+          <th>Budget Status</th>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Account number</th>
+          <th>Budget (amount)</th>
+          <th>Access Rights</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        {% for user in users %}
+        <tbody>
+        <tr>
+          <td><div class="circle {% if is_limit_exceeded(user.uid) %}red{% else %}green{% endif %}"></div></td>
+          <td>{{user.fullname}}</td>
+          <td>{{user.roles | join(', ') }}</td>
+          <td>{{user.account}}</td> 
+          <td>{% if "Admin" in role or session_user.uid == user.uid or "Child" in user.roles %} {{user.budget}} {% endif %}</td> 
+          <td>{% if "Admin" in role or session_user.uid == user.uid or "Child" in user.roles %} {{user.accessRights | join(', ') }} {% endif %}</td>
+          <td>
+            {% if "Admin" in role or "Manage" in right%}
+                <button class="edit-budget" data-userid="{{ user.uid }}" >Change Budget</button>
+                <button class="edit-access" data-userid="{{ user.uid }}" >Change Access</button>
+                <button class="delete-access" data-userid="{{ user.uid }}" >Delete Access</button>
+              <form method="POST">
+                <input type="hidden" name="user_id" value="{{ user.uid }}">
+                <button class="btn delete" data-userid="{{ user.uid }}" name="action" value="delete_member"  >Delete</button>
+              </form>
+            {% endif %}
+                {% if ("Edit" in right or session_user.uid == user.uid) and "Admin" not in user.roles %}
+                <button class="edit-budget" data-userid="{{ user.uid }}">Change Budget</button>
+                {% endif %}
+                {% if "Delete" in right and "Admin" not in user.roles %}
+                <form method="POST">
+                  <button class="delete-access" data-userid="{{ user.uid }}" name="action" value="delete_access"  >Delete Access</button>
+                  <input type="hidden" name="user_id" value="{{ user.uid }}">
+                  <button class="btn delete" data-userid="{{ user.uid }}" name="action" value="delete_member"  >Delete</button>
+                </form>
+              {% endif %}
+        </td>
+      </tr>
+        </tbody>
+
+        {%endfor%}
+  
+
+    </div>
+{% for user in users %}
+    {% if "Edit" in right or "Manage" in right or session_user.uid == user.uid %}
+    <div class="hidden-form hidden" id="editbudget-form-{{ user.uid }}">
+      <h2>Change budget {{user.fullname}} </h2>
+      <form id="budget-form" class="form-container" method="POST">
+        <label for="limit">Limit:</label>
+        <input type="number" id="limit" name="limit" placeholder="Enter budget limit" required>
+        <input type="hidden" name="user_id" value="{{ user.uid }}">
+        <button type="submit" name="action" value="change_budget" class="btn">Save Budget</button>
+     </form>
+    </div>
+    {% endif %}
+    {% if "Manage" in right  %}
+    <div class="hidden-form hidden" id="rights-form-{{ user.uid}}">
+      <h2>Edit User {{user.fullname}} </h2>
+      <form id="edit-user-form" class="form-container" method="POST">
+        <label for="username">User Name:</label>
+        <input type="text" id="username" name="username" placeholder="Enter User Name" value="{{ user.username }}" required>
+
+        <label for="fullname">Full name:</label>
+        <input type="text" id="fullname" name="fullname" placeholder="Enter Full name" value="{{ user.fullname }}" required>
+        
+        <label for="password">Password:</label>
+        <input type="password" name="password" placeholder="Enter password" value="{{ user.password }}" required>
+        <div class="radio-group">
+              <p>Role:</p>
+              <label>
+                <input type="radio" id="role-adult" name="role" value="Adult" checked> Adult
+              </label>
+              <label>
+                <input type="radio" id="role-child" name="role" value="Child"> Child
+              </label>
+        </div>
+
+        <label for="action-type">Access right type:</label>
+        <select id="action-type" name="right">
+          <option value="Edit">Edit</option>
+          <option value="Delete">Delete</option>
+          <option value="Manage">Manage</option>
+        </select>
+        <input type="hidden" name="user_id" value="{{ user.uid }}">
+        <button type="submit" class="btn" name="action" value="change_access">OK</button>
+      </form>
+    </div>
+    {% endif %}
+    {% if "Delete" in right or "Manage" in right%}
+  <div class="hidden-form hidden" id="delete-rights-form-{{ user.uid}}">
+    <h2>Delete Access Right</h2>
+    <form id="delete-right-form" class="form-container" method="POST">
+      <label for="right-select">Select Right to Delete:</label>
+      <select id="right-select" name="right">
+        <option value="Edit">Edit</option>
+        <option value="Delete">Delete</option>
+        <option value="Manage">Manage</option>
+      </select>
+      <input type="hidden" name="user_id" value="{{ user.uid }}">
+      <button type="submit" class="btn" name="action" value="delete_access">DELETE</button>
+    </form>
+  </div>
+  {% endif %}
+{% endfor %}
+  </section>
+{%endblock%}
