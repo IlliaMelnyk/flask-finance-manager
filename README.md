@@ -1,4 +1,4 @@
-# Family Finance Manager 💰
+# Family Finance Manager 
 
 A full-stack web application built with **Python** and **Flask** designed to manage and track family finances. It allows users to record income and expenses, categorize transactions, and manage multiple family members with role-based access control.
 
